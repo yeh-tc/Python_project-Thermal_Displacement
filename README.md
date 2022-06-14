@@ -1,1 +1,1 @@
-# thermaldisplacement
+# thermal displacement
