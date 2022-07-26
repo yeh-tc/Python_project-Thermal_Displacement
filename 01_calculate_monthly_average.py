@@ -8,39 +8,20 @@ from dask.distributed import Client
 # input nc file
 filePath='./OISST/*.????????.nc'
 
-# time range for climatology
-#startTime = '1982-01-01'
-#endTime = '2019-12-31'
-
-# filename to datetime
-#def filename_to_datetime(filename):
-#    filedate = re.match(r'.*(\d{8}).nc',filename)
-#    if filedate:
-#        return datetime.datetime.strptime(filedate.group(1),'%Y%m%d')
-#    else:
-#        return datetime.datetime.strptime('1700-01-01',"%Y-%m-%d")
-    
-# check if the file is within the time range 
-#def get_time(start_time, end_time):
-#    return [file for file in glob.glob(filePath) 
-#            if datetime.datetime.strptime(start_time,"%Y-%m-%d") < filename_to_datetime(file) < datetime.datetime.strptime(end_time,"%Y-%m-%d")]
-
-#fileForMerge = get_time(startTime, endTime)
-
 fileForMerge=[file for file in glob.glob(filePath)]
 
 print('Merging files')
-tic = time.time()
+#tic = time.time()
 #client = Client()
 ds2 = xarray.open_mfdataset(fileForMerge, parallel=True,chunks={'time': '500MB'})
-toc = time.time()
-print('Finish Merging..in {:.4f} mins'.format((toc-tic)/60))
+#toc = time.time()
+#print('Finish Merging..in {:.4f} mins'.format((toc-tic)/60))
 print('################')
 
 print('Calculate sst monthly mean')
 mean_month_sst =ds2["sst"].resample(time='1MS').mean()
 pr_mean_done = mean_month_sst.compute()
-#mean_month_sst =ds2.groupby('time.month').mean(skipna=True,dim="time")
+
 startTime = pd.to_datetime(str(pr_mean_done.time.min().data)).strftime('%Y-%m-%d')
 endTime = pd.to_datetime(str(pr_mean_done.time.max().data)).strftime('%Y-%m-%d')
 print('Saving sst mean')
