@@ -9,3 +9,6 @@
 <h3>This project</h3>
 
 Python code for calculating thermal displacement.
+<ul>
+<li>daily OISST data from NOAA (v2.1): https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/</li>
+</ul>
