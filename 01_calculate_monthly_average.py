@@ -8,20 +8,18 @@ from dask.distributed import Client
 # input nc file
 filePath='./OISST/*.????????.nc'
 
-fileForMerge=[file for file in glob.glob(filePath)]
-
 print('Merging files')
-#tic = time.time()
-#client = Client()
-ds2 = xarray.open_mfdataset(fileForMerge, parallel=True,chunks={'time': '500MB'})
-#toc = time.time()
-#print('Finish Merging..in {:.4f} mins'.format((toc-tic)/60))
+tic = time.time()
+
+ds2 = xarray.open_mfdataset(filePath, parallel=True,chunks={'time': '500MB'})
+toc = time.time()
+print('Finish Merging..in {:.4f} mins'.format((toc-tic)/60))
 print('################')
 
 print('Calculate sst monthly mean')
 mean_month_sst =ds2["sst"].resample(time='1MS').mean()
 pr_mean_done = mean_month_sst.compute()
-
+#mean_month_sst =ds2.groupby('time.month').mean(skipna=True,dim="time")
 startTime = pd.to_datetime(str(pr_mean_done.time.min().data)).strftime('%Y-%m-%d')
 endTime = pd.to_datetime(str(pr_mean_done.time.max().data)).strftime('%Y-%m-%d')
 print('Saving sst mean')
