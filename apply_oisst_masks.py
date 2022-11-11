@@ -119,6 +119,10 @@ def apply_oisst_masks(ii,jj,d_lat,mask_all):
     elif mask_o == 13:
         mask_all['d_mask'].data[np.logical_or(mask.data != 13, mask.data != 14)] = np.nan
     elif mask_o == 14:
+        ##in the code apply_oisst_masks.m from M. Jacox 2020
+        ##line 108
+        ##d_mask((mask>=15 & mask<=17) | lat>283) = nan;
+        ##here I cheanged lat to lon
         temp = mask_all['mask'].where((mask.lon > 283) ,other = 50).data
         mask_all['d_mask'].data[np.logical_or((mask.data >= 15) & (mask.data <=17), temp != 50)] = np.nan
     elif mask_o == 15:
