@@ -56,9 +56,9 @@ td=sst
 #把全部變成nan
 td=td.where(td>100)
 td.name = "td"
-def addapt_numpy_float32(numpy_float32):
-        return AsIs(numpy_float32)
-register_adapter(np.float32, addapt_numpy_float32)
+#def addapt_numpy_float32(numpy_float32):
+#        return AsIs(numpy_float32)
+#register_adapter(np.float32, addapt_numpy_float32)
 t1=time.time()
 for ii in range(1440):
     for jj in range(720):
