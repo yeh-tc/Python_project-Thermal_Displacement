@@ -91,26 +91,11 @@ for ii in range(1440):
                 d_tmp[np.where(np.logical_or(mask1,mask2))] = np.nan
                 d_tmp[np.where(mask3)]=np.nan
                 if np.isnan(d_tmp).all():
-                    #td_fail.isel(lon=ii,lat=jj)[it] = 1
-                    #td.isel(lon=ii,lat=jj)[it] =np.nan
-                    #td_ind.isel(lon=ii,lat=jj)[it] =np.nan
-                    print('nan')
+                    td_fail.isel(lon=ii,lat=jj)[it] = 1
+                    td.isel(lon=ii,lat=jj)[it] =np.nan
+                    td_ind.isel(lon=ii,lat=jj)[it] =np.nan
                 else:
-                    lon = float(sst.lon[ii].data)
-                    lat = float(sst.lat[jj].data)
-                    tdd = np.float32(np.nanmin(d_tmp))
-                    #print(f'it={it},date={sst.time[it].values},dis={tdd},lon={lon},lat={lat}')
-                    #td.isel(lon=ii,lat=jj)[it] = np.float32(np.nanmin(d_tmp))
-                    #td_ind.isel(lon=ii,lat=jj)[it] = np.nanargmin(d_tmp[0])
-                    x = pd.to_datetime(td.time[it].values).date()
-                    conn = psycopg2.connect(database="xxxx", user="xxxx", password="****", host="127.0.0.1", port="5432")
-                    cursor = conn.cursor()
-                    sql = "INSERT INTO td (lat, lon, distance,date) VALUES (%s, %s, %s, %s);" # Note: no quotes
-                    data = (lat,lon,tdd, x)
-                        
-                        
-                        
-                    cursor.execute(sql,data)
-                    conn.commit()
-                    cursor.close()
+                    td.isel(lon=ii,lat=jj)[it] = np.float32(np.nanmin(d_tmp))
+                    td_ind.isel(lon=ii,lat=jj)[it] = np.nanargmin(d_tmp[0])
+                    
                  
