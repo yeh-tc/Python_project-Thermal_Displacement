@@ -3,7 +3,7 @@ import wget
 import re,os
 
 # Daily data from NOAA
-url ='https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/'
+url ='https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr'
 
 # Set this to the directory with the codes
 workingDir = os.getcwd()
