@@ -1,29 +1,28 @@
-import pandas as pd
-import xarray
 import numpy as np
+import xarray as xr
 import time
-from numpy.linalg import multi_dot
-##text described below are copy from M. Jacox 2020 matlab
-##Create matrix of distances between points on the OISST grid
-##For each latitude, a grid of 2879 x 720 distances is created
-##The matrix is subset as necessary in thermal_displacement.m
-f_grid = xarray.open_dataset('./OISST/lsmask.oisst.v2.nc')
-lon = np.array(f_grid['lon'])
-lat = np.array(f_grid['lat'])
 
-# Earth's radius in km
-Re = 6371
-#Get grid parameters for calculation
-res = lon[2] - lon[1]
-lats = np.deg2rad(np.arange(min(lat),max(lat)+res,res))
-dlon = np.deg2rad(np.arange(min(lon)-max(lon),max(lon)-min(lon)+res,res))
+f_grid = xr.open_dataset('./OISST/lsmask.oisst.v2.nc')
+lon = f_grid['lon'].values
+lat = f_grid['lat'].values
+
+Re = 6371  # Earth's radius in km
+res = lon[1] - lon[0]  # Get grid parameters for calculation
+
+lats = np.arange(np.deg2rad(min(lat)), np.deg2rad(max(lat) + res), np.deg2rad(res))
+dlon = np.arange(np.deg2rad(min(lon) - max(lon)), np.deg2rad(max(lon) - min(lon) + res), np.deg2rad(res))
+
 lat_mat = np.tile(lats, (len(dlon), 1))
-dlon_mat = np.tile(dlon,(len(lats),1)).T
-#Loop through each latitude and calculate distance to all other points
-t1=time.time()
-d=np.zeros((len(lats),len(dlon),len(lats)))
-for ilat in range(len(lats)):
-    d[ilat,:,:] = np.real(np.array(Re).dot(np.arccos(np.array(np.sin(lats[ilat])).dot(np.sin(lat_mat))+np.array(np.cos(lats[ilat])).dot(np.cos(lat_mat))*np.cos(dlon_mat))))
-    
-df = xarray.DataArray(d, coords=[('lats', lats), ('dlon', dlon),('lat',lats)])
-df.to_netcdf('oisst_distance.nc')
+dlon_mat = np.tile(dlon, (len(lats), 1)).T
+
+d = np.zeros((len(lats), len(dlon), len(lats)))
+
+t1 = time.time()
+
+for ilat, lat_val in enumerate(lats):
+    d[ilat, :, :] = Re * np.arccos(np.sin(lat_val) * np.sin(lat_mat) + np.cos(lat_val) * np.cos(lat_mat) * np.cos(dlon_mat))
+
+df = xr.DataArray(d, coords=[('lats', lats), ('dlon', dlon), ('lat', lats)])
+df.to_netcdf('oisst_distance2.nc')
+
+print("Time elapsed: ", time.time() - t1)

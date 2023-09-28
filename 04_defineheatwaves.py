@@ -1,47 +1,45 @@
-######
-# define heatwaves
-# this code is for 'historical' and detrend anomalies before calculating heatwaves
-######
 import xarray
 import numpy as np
 import pandas as pd
-threshold = 0.9
-##
-sst_an_dt = xarray.load_dataset('oisst_an_1982-2022.nc')
-sst_an_dt_clim = sst_an_dt.sel(time=slice('1982-01-01', '2011-12-01'))
-# Find monthly heatwave thresholds for each point
-# Use 3-month running window, similar to Hobday et al. 11-day running
-# window for daily MHW definition
-mergelist=[]
-for i in range(1,13):
-    if i ==1:
-        a=12
-        b=i
-        c=i+1
-        
-    elif i==12:
-        a=i-1
-        b=i
-        c=1
-    else:
-        a=i-1
-        b=i
-        c=i+1
-    temp = sst_an_dt_clim.sel(time=sst_an_dt_clim.time.dt.month.isin([a,b,c]))
-    j = temp.__xarray_dataarray_variable__
-    jj = j.quantile([threshold], dim='time', skipna=True,method='midpoint')
-    jj.coords['time2'] = i
-    jj.name = "sst_an_thr"
-    mergelist.append(jj)
-sst_an_thr = xarray.concat([w for w in mergelist],"time2")
 
-# Define heatwave periods
-# 用每個月的 anomaly 去跟每個月的thresold(大於90%)比
-# 比threshold大 就標記 1
-for idx,layer in enumerate(sst_an_dt.time.data):
+sst_an_dt = xarray.open_dataset('oisst_an_1982-2023.nodetrend.nc')
+sst_an_dt_level = sst_an_dt.copy()
+# Define the threshold value
+threshold = 0.9
+
+# Extract climatology
+sst_an_dt_clim = sst_an_dt.sel(time=slice('1982-01-01', '2011-12-01'))
+variable_name = list(sst_an_dt.data_vars.keys())[0]
+mergelist = []
+for i in range(1, 13):
+    months = [i % 12 + 1, i, (i + 1) % 12 + 1]
+    temp = sst_an_dt_clim.sel(time=sst_an_dt_clim.time.dt.month.isin(months))
+    j = temp[variable_name]
+    #the result of clim is more close to author's result by using xarray quantile function than using np.nanquantile
+    jj = j.quantile([threshold], dim='time', skipna=True, method='midpoint') #in matlab, the prctile function will skip nan
+    jj = jj.assign_coords(time2=i).rename("sst_an_thr")
+    mergelist.append(jj)
+    
+sst_an_thr = xarray.concat(mergelist, "time2")
+for idx, layer in enumerate(sst_an_dt_level.time.data):
     ts = pd.to_datetime(layer)
-    layermon = int(ts.strftime('%m'))
-    tem = sst_an_dt.sel(time=layer)
-    thr = sst_an_thr.sel(time2=layermon)
-    sst_an_dt.__xarray_dataarray_variable__[idx] = xarray.where((tem.__xarray_dataarray_variable__.data >= np.squeeze(thr.data, axis=0)),1,0)
-sst_an_dt.load().to_netcdf("oisst_mhw_90perc_1982-2019_detrendedof1982_2019.nc")
+    layermonth = int(ts.strftime('%m'))
+    tem = sst_an_dt_level.sel(time=layer)
+    thr = sst_an_thr.sel(time2=layermonth)
+    a=tem.sst_an.data>np.squeeze(thr.data, axis=0)
+    b=tem.sst_an.data/np.squeeze(thr.data, axis=0) < 2
+    c=tem.sst_an.data/np.squeeze(thr.data, axis=0) >= 2
+    d=tem.sst_an.data/np.squeeze(thr.data, axis=0) < 3
+    e=tem.sst_an.data/np.squeeze(thr.data, axis=0) >= 3
+    f=tem.sst_an.data/np.squeeze(thr.data, axis=0) < 4
+    Extreme=tem.sst_an.data/np.squeeze(thr.data, axis=0) >= 4
+    Moderate=np.logical_and(a, b)
+    Strong=np.logical_and(c, d)
+    Severe=np.logical_and(e, f)
+    sst_an_dt_level.sst_an[idx] = xarray.where(Moderate,1,0)
+    sst_an_dt_level.sst_an[idx].data[Strong] = 2
+    sst_an_dt_level.sst_an[idx].data[Severe] = 3
+    sst_an_dt_level.sst_an[idx].data[Extreme] = 4
+    
+sst_an_dt_level.load().to_netcdf(f"oisst_level_1982-2023_2023.nodetrend.nc")
+sst_an_thr.load().to_netcdf(f"oisst_threshold_1982-2023_2023.nodetrend.nc")
