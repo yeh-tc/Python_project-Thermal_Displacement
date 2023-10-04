@@ -1,38 +1,29 @@
+import pandas as pd
+import xarray
 import numpy as np
-import xarray as xr
 import time
+from numpy.linalg import multi_dot
+##text described below are copy from M. Jacox 2020 matlab
+##Create matrix of distances between points on the OISST grid
+##For each latitude, a grid of 2879 x 720 distances is created
+##The matrix is subset as necessary in thermal_displacement.m
+f_grid = xarray.open_dataset('./OISST/lsmask.oisst.v2.nc')
+lon = np.array(f_grid['lon'])
+lat = np.array(f_grid['lat'])
 
-f_grid = xr.open_dataset('./OISST/lsmask.oisst.v2.nc')
-lon = f_grid['lon'].values
-lat = f_grid['lat'].values
-
-Re = 6371  # Earth's radius in km
-res = lon[1] - lon[0]  # Get grid parameters for calculation
-
-lats = np.arange(lat.min(), lat.max() + res, res)
-dlon = np.concatenate([lon[-1] - lon[:-1] + res, lon])
-lat_mat, dlon_mat = np.meshgrid(lats, dlon)
-d = np.empty((len(lats), len(dlon), len(lats)))
-start_time = time.time()
-for ilat, current_lat in enumerate(lats):
-        # Calculate distance to all other points
-    d[ilat, :, :] = Re * np.arccos(
-        np.sin(np.deg2rad(current_lat)) * np.sin(np.deg2rad(lat_mat)) +
-        np.cos(np.deg2rad(current_lat)) * np.cos(np.deg2rad(lat_mat)) * np.cos(np.deg2rad(dlon_mat))
-    )
-
-    # Periodically report status
-    if ilat % (len(lats) // 20) == 0:
-        elapsed_time = (time.time() - start_time) / 60
-        print(f"{100 * ilat / len(lats):.0f}% done, {elapsed_time:.0f} min elapsed")
-
-    # Convert the array to xarray DataArray for saving
-d_da = xr.DataArray(
-    d.astype(np.float32),
-    coords={"lats": lats, "dlon": dlon, "lat": lats},
-    dims=["lats", "dlon", "lat"]
-)
-d_da.to_netcdf(fout)
-
-d = np.zeros((len(lats), len(dlon), len(lats)))
-d_da.to_netcdf('oisst_distance.nc')
+# Earth's radius in km
+Re = 6371
+#Get grid parameters for calculation
+res = lon[2] - lon[1]
+lats = np.deg2rad(np.arange(min(lat),max(lat)+res,res))
+dlon = np.deg2rad(np.arange(min(lon)-max(lon),max(lon)-min(lon)+res,res))
+lat_mat = np.tile(lats, (len(dlon), 1))
+dlon_mat = np.tile(dlon,(len(lats),1)).T
+#Loop through each latitude and calculate distance to all other points
+t1=time.time()
+d=np.zeros((len(lats),len(dlon),len(lats)))
+for ilat in range(len(lats)):
+    d[ilat,:,:] = np.real(np.array(Re).dot(np.arccos(np.array(np.sin(lats[ilat])).dot(np.sin(lat_mat))+np.array(np.cos(lats[ilat])).dot(np.cos(lat_mat))*np.cos(dlon_mat))))
+    
+df = xarray.DataArray(d, coords=[('lats', lats), ('dlon', dlon),('lat',lats)])
+df.to_netcdf('oisst_distance.nc')
