@@ -4,7 +4,7 @@ import xarray as xr  # Ensure to import xarray
 def apply_oisst_masks(ii, jj, d_lat, mask_all):
     d_lat_T = d_lat.to_numpy().T
     mask_all['d_mask'] = (('lat', 'lon'), d_lat_T)
-    #d_lat_T_3d = d_lat_T.reshape((1, 720, 1439))
+    #d_lat_T_3d = d_lat_T.reshape((1, 720, 1440))
     #mask_all['d_mask'] = (('time', 'lat', 'lon'), d_lat_T_3d)
     
     mask = mask_all['mask']
