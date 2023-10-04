@@ -12,11 +12,24 @@ sst_an_dt_clim = sst_an_dt.sel(time=slice('1982-01-01', '2011-12-01'))
 variable_name = list(sst_an_dt.data_vars.keys())[0]
 mergelist = []
 for i in range(1, 13):
-    months = [i % 12 + 1, i, (i + 1) % 12 + 1]
+    if i ==1:
+        a=12
+        b=i
+        c=i+1
+        
+    elif i==12:
+        a=i-1
+        b=i
+        c=1
+    else:
+        a=i-1
+        b=i
+        c=i+1
+    months = [a, b, c]
     temp = sst_an_dt_clim.sel(time=sst_an_dt_clim.time.dt.month.isin(months))
     j = temp[variable_name]
     #the result of clim is more close to author's result by using xarray quantile function than using np.nanquantile
-    jj = j.quantile([threshold], dim='time', skipna=True, method='midpoint') #in matlab, the prctile function will skip nan
+    jj = j.quantile([threshold], dim='time', skipna=True) #in matlab, the prctile function will skip nan
     jj = jj.assign_coords(time2=i).rename("sst_an_thr")
     mergelist.append(jj)
     
@@ -40,6 +53,6 @@ for idx, layer in enumerate(sst_an_dt_level.time.data):
     sst_an_dt_level.sst_an[idx].data[Strong] = 2
     sst_an_dt_level.sst_an[idx].data[Severe] = 3
     sst_an_dt_level.sst_an[idx].data[Extreme] = 4
-    
-sst_an_dt_level.load().to_netcdf(f"oisst_level_1982-2023_2023.nodetrend.nc")
-sst_an_thr.load().to_netcdf(f"oisst_threshold_1982-2023_2023.nodetrend.nc")
+sst_an_dt_level=sst_an_dt_level.rename({'sst_an':'level'})
+sst_an_dt_level.load().to_netcdf(f"oisst_level_1982-2023.nodetrend.nc")
+sst_an_thr.load().to_netcdf(f"oisst_threshold_1982-2023.nodetrend.nc")
