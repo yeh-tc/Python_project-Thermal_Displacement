@@ -13,4 +13,3 @@ Python code for calculating thermal displacement.
 <li>daily OISST data source from NOAA (v2.1): https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/</li>
 </ul>
 
-Front End: https://eco.odb.ntu.edu.tw/pub/MHW/
