@@ -178,11 +178,11 @@ def addapt_numpy_float32(numpy_float32):
         return AsIs(numpy_float32)
 register_adapter(np.float32, addapt_numpy_float32)
 with psycopg2.connect(
-database=config['postgresql']['database'],
-user=config['postgresql']['user'],
-password=config['postgresql']['password'],
-host=config['postgresql']['host'],
-port=config['postgresql']['port']
+    database=config['postgresql']['database'],
+    user=config['postgresql']['user'],
+    password=config['postgresql']['password'],
+    host=config['postgresql']['host'],
+    port=config['postgresql']['port']
 ) as conn:
     with conn.cursor() as cursor:
         args = ','.join(cursor.mogrify("(%s,%s,%s,%s,%s,%s,%s)", i).decode('utf-8') for i in records )
