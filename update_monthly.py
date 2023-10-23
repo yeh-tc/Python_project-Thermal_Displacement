@@ -7,7 +7,7 @@ import numpy as np
 from datetime import datetime
 from psycopg2.extensions import register_adapter, AsIs
 from multiprocessing import Pool,cpu_count
-from apply_oisst_masks import apply_oisst_masks
+from apply_oisst_masks_new import apply_oisst_masks
 
 
 config = configparser.ConfigParser()
@@ -20,6 +20,7 @@ YearNow = int(now.strftime('%Y'))
 if (MonthNow > 1):
     MonthStr = str(MonthNow - 1).zfill(2)
 else:
+    YearNow = YearNow - 1
     MonthStr = '12'
 
 t0=time.time()
@@ -176,20 +177,19 @@ t3=time.time()
 def addapt_numpy_float32(numpy_float32):
         return AsIs(numpy_float32)
 register_adapter(np.float32, addapt_numpy_float32)
-conn = psycopg2.connect(
+with psycopg2.connect(
 database=config['postgresql']['database'],
 user=config['postgresql']['user'],
 password=config['postgresql']['password'],
 host=config['postgresql']['host'],
 port=config['postgresql']['port']
-)
-
-cursor = conn.cursor()
-args = ','.join(cursor.mogrify("(%s,%s,%s,%s,%s,%s,%s)", i).decode('utf-8') for i in records )
-sql = 'INSERT INTO sst_anomaly_without_detrend (lat, lon, sst_anomaly,date,level,td,gid) VALUES '+ args
-cursor.execute(sql)
-conn.commit()
-cursor.close()
+) as conn:
+    with conn.cursor() as cursor:
+        args = ','.join(cursor.mogrify("(%s,%s,%s,%s,%s,%s,%s)", i).decode('utf-8') for i in records )
+        sql = 'INSERT INTO sst_anomaly_without_detrend (lat, lon, sst_anomaly,date,level,td,gid) VALUES '+ args
+        cursor.execute(sql)
+        conn.commit()
+        cursor.close()
 
 t4=time.time()
 print(f' finished postgres part in {t4-t3} s')
