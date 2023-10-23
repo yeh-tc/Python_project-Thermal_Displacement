@@ -7,7 +7,7 @@ import numpy as np
 from datetime import datetime
 from psycopg2.extensions import register_adapter, AsIs
 from multiprocessing import Pool,cpu_count
-from apply_oisst_masks_new import apply_oisst_masks
+from apply_oisst_masks import apply_oisst_masks
 
 
 config = configparser.ConfigParser()
